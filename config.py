@@ -6,12 +6,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- API ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# API
+GEMINI_KEYS = [
+    os.getenv("GEMINI_API_KEY_1"),
+    os.getenv("GEMINI_API_KEY_2"),
+    os.getenv("GEMINI_API_KEY_3"),
+]
+GEMINI_KEYS = [k for k in GEMINI_KEYS if k]
 MODEL_VERSION = 'gemini-2.5-flash'
 
 # --- Mouse Settings ---
 MOVE_PIXELS = 35
-PAUSE_BETWEEN_QUESTIONS = 3.0
+PAUSE_BETWEEN_QUESTIONS = 2.0
 PAUSE_BETWEEN_ACTIONS = 0.75
 MOVE_DURATION = 0.5
 CURVE_STRENGTH = 8

@@ -73,7 +73,9 @@ uv sync
 Create a `.env` file in the project root:
 
 ```
-GEMINI_API_KEY=your_key_here
+GEMINI_API_KEY_1=your_key_here
+GEMINI_API_KEY_2=your_key_here
+....
 ```
 
 The key is automatically loaded by `config.py`:
@@ -102,8 +104,9 @@ Script ready (True=Up, False=Down). Press F9.
 ### ⌨️ Hotkeys
 
 | Key          | Action                                             |
-| ------------ | -------------------------------------------------- |
+|--------------|----------------------------------------------------|
 | **F9**       | Capture screen → send to AI → perform mouse action |
+| **F8**       | Restarts Script                                    |
 | **ESC**      | Enter exit confirmation mode                       |
 | **ESC → F9** | Quit the program                                   |
 
@@ -167,7 +170,7 @@ Configurable via:
 Available settings:
 
 ```python
-GEMINI_API_KEY
+GEMINI_KEYS
 MODEL_VERSION
 MOVE_PIXELS
 PAUSE_BETWEEN_QUESTIONS

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
+import sys
 import re
 import io
 import threading
 import time
+import itertools
 import math
 import platform
 import google.generativeai as genai
@@ -12,7 +14,7 @@ from pynput import keyboard
 from mss import mss
 from PIL import Image
 from config import (
-    GEMINI_API_KEY,
+    GEMINI_KEYS,
     MODEL_VERSION,
     MOVE_PIXELS,
     PAUSE_BETWEEN_QUESTIONS,
@@ -35,9 +37,11 @@ else:
     SCROLL_AMOUNT_DOWN = -5
     SCROLL_AMOUNT_UP = 5
 
-# ВСТАВЬТЕ СВОЙ API KEY
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(MODEL_VERSION)
+if GEMINI_KEYS:
+    gemini_key_cycle = itertools.cycle(GEMINI_KEYS)
+else:
+    gemini_key_cycle = None
+    print("⚠️  Внимание: Ключи Gemini не найдены в .env")
 
 pyautogui.PAUSE = 0.0
 
@@ -47,6 +51,9 @@ is_awaiting_exit_confirmation = False
 processing_start_time = 0
 current_request_id = 0
 
+def restart_program():
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
 def move_mouse_smoothly_curved(dx, dy):
     try:
@@ -82,13 +89,11 @@ def perform_mouse_action(result_text):
 
             # --- ЛОГИКА TRUE / FALSE ---
             if 'true' in line_lower:
-                print("Действие: True -> ВВЕРХ")
                 move_mouse_smoothly_curved(0, -MOVE_PIXELS)  # Двигаем вверх
                 time.sleep(PAUSE_BETWEEN_QUESTIONS)
                 continue  # Переходим к след. строке, буквы искать не нужно
 
             if 'false' in line_lower:
-                print("Действие: False -> ВНИЗ")
                 move_mouse_smoothly_curved(0, MOVE_PIXELS)  # Двигаем вниз
                 time.sleep(PAUSE_BETWEEN_QUESTIONS)
                 continue
@@ -118,6 +123,15 @@ def perform_mouse_action(result_text):
 def analyze_task(my_request_id):
     global is_processing, current_request_id
     try:
+        if gemini_key_cycle:
+            new_key = next(gemini_key_cycle)
+            genai.configure(api_key=new_key)
+            local_model = genai.GenerativeModel(MODEL_VERSION)
+            print(f"🔑 Смена ключа. Использую ключ, заканчивающийся на ...{new_key[-4:]}")
+        else:
+            print("Ошибка: Нет ключей!")
+            return
+
         with mss() as sct:
             monitor = sct.monitors[1]
             sct_img = sct.grab(monitor)
@@ -130,7 +144,8 @@ def analyze_task(my_request_id):
         prompt_parts = [PROMPT, image_part]
 
         print("Запрос отправлен...")
-        response = model.generate_content(
+
+        response = local_model.generate_content(
             prompt_parts,
             request_options={"timeout": 45}
         )
@@ -152,6 +167,10 @@ def analyze_task(my_request_id):
 
 def on_press(key):
     global is_processing, is_awaiting_exit_confirmation, processing_start_time, current_request_id
+
+    if key == keyboard.Key.f8:
+        restart_program()
+        return
 
     if is_awaiting_exit_confirmation:
         if key == keyboard.Key.f9:
